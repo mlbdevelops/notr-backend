@@ -9,7 +9,7 @@ dotenv.config();
 const router = Router();
 
 // Set SendGrid API Key
-sgMail.setApiKey('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');
+sgMail.setApiKey(process.env.SEND_GRID_API);
 
 // Generate 6-digit verification code
 function generatePassword() {

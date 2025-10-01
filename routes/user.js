@@ -135,6 +135,12 @@ router.get('/api/users/getOtherProfile/:id', async (req, res) => {
         response: 'user id is required.'
       });
     }
+    const foundUser = await User.findById(id);
+    if (!foundUser) {
+      return res.status(404).send({
+        msg: 'This is account is temporarily unavailable or might have been deleted.'
+      })
+    }
     const connections = await Connect.find({
       connectedTo : id
     });
@@ -179,7 +185,7 @@ router.get('/api/users/getOtherProfile/:id', async (req, res) => {
       }
     ]);
     res.status(200).send({
-      user: await User.findById(id),
+      user: foundUser,
       notes: notes.length,
       posts: posts, 
       connections: connections.length
@@ -305,7 +311,7 @@ router.post('/api/user/editIsPrivate', verifyToken, async (req, res) => {
 router.get('/user', (req, res) => {
   const { id } = req.query
   if (id) {
-    return res.redirect(`http://localhost:3000/profile/profile?user=${id}`)
+    return res.redirect(`https://notr-sigma.vercel.app/profile/profile?user=${id}`)
   }
 })
 
