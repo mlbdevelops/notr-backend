@@ -91,4 +91,4 @@ app.get('/api/gemini', async (req, res) => {
 });
 
 export default app;
-//app.listen(process.env.PORT, () => console.log(`Local server running on port ${PORT}`));
+//app.listen(process.env.PORT || 3001, () => console.log(`Local server running on port ${3001}`));

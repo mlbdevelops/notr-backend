@@ -126,10 +126,10 @@ router.post('/api/users/connect', verifyToken, async (req ,res) => {
   }
 });
 
-router.get('/api/users/getOtherProfile/:id', async (req, res) => {
+router.get('/api/users/getOtherProfile/:id/logged/:loggedUser', async (req, res) => {
   try {
     const { id } = req.params;
-    const { loggedUser } = req.query;
+    const { loggedUser } = req.params;
     if (!id) {
       return res.status(400).send({
         isSuccess: false,
@@ -148,7 +148,7 @@ router.get('/api/users/getOtherProfile/:id', async (req, res) => {
     const notes = await Note.find({ownerId: id});
     const posts = await Post.aggregate([
       {
-        $match: { user: loggedUser }
+        $match: { user: id }
       },
       { $sort: { createdAt: -1 } },
       { $limit: 15 },
@@ -171,7 +171,7 @@ router.get('/api/users/getOtherProfile/:id', async (req, res) => {
       {
         $addFields: {
           likeCount: { $size: "$like" },
-          likedByUser: loggedUser
+          likedByUser: loggedUser && loggedUser != 'null'
             ? { $in: [new mongoose.Types.ObjectId(loggedUser), "$like.user"] }
             : false,
           user: { $first: "$user" } 
