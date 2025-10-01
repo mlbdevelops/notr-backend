@@ -1,33 +1,29 @@
 import Router from 'express';
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 import UnVerifiedUsers from '../../db/schemas/unVerifiedEmails.js';
-import crypto from 'crypto';
 import User from '../../db/schemas/userSchema.js';
 import dotenv from 'dotenv';
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcryptjs';
 
-dotenv.config()
-
+dotenv.config();
 const router = Router();
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.APP_EMAIL,
-    pass: process.env.APP_PASSWORD
-  }
-});
+// Set SendGrid API Key
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+// Generate 6-digit verification code
 function generatePassword() {
-  return Math.round(Math.random() * 1e6);
+  return Math.floor(Math.random() * 1e6);
 }
 
+// Send email via SendGrid
 async function sendEMail(email, code) {
-  const mailOptions = {
-    from: `"Notr" <${process.env.APP_EMAIL}>`,
-    to: email,
-    subject: 'Verify Your Email Address',
-    html: `
+  try {
+    const msg = {
+      to: email,
+      from: process.env.APP_EMAIL, // must be verified in SendGrid
+      subject: 'Verify Your Email Address',
+      html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; color: #111; background-color: #fff; border-radius: 8px; border: 1px solid #ddd;">
         
         <div style="text-align: center; margin-bottom: 30px;">
@@ -50,73 +46,66 @@ async function sendEMail(email, code) {
         <p style="font-size: 12px; color: #555;">Need help? Contact our support team at <a href="mailto:${process.env.APP_EMAIL}" style="color: #111;">${process.env.APP_EMAIL}</a></p>
         <p style="font-size: 12px; color: #555;">&copy; ${new Date().getFullYear()} Notr. All rights reserved.</p>
       </div>
-    `
-  };
+      `
+    };
 
-  await transporter.sendMail(mailOptions, (err, info) => {
-    if (err) { 
-      console.log(err);
-    }
-    return info;
-  });
+    const response = await sgMail.send(msg);
+    console.log('SendGrid response:', response[0].statusCode);
+  } catch (err) {
+    console.error('SendGrid Error:', err);
+  }
 }
 
+// Route to create verification code
 router.post('/api/createCode/email', async (req, res) => {
-  try{
+  try {
     const { email } = req.body;
     const code = generatePassword();
-    
-    const checkIfUserExists = await User.findOne({
-      email: email
-    });
-    console.log(checkIfUserExists);
+
+    const checkIfUserExists = await User.findOne({ email });
     if (checkIfUserExists?._id) {
-      return res.status(401).send({
-        msg: 'This email is already registered. Try another one'
-      });
+      return res.status(401).send({ msg: 'This email is already registered. Try another one' });
     }
-    const check = await UnVerifiedUsers.find({email: email});
-    
+
+    const check = await UnVerifiedUsers.find({ email });
     if (check.length >= 1) {
-      for(let email of check){
-        await UnVerifiedUsers.findByIdAndDelete(email._id);
+      for (let e of check) {
+        await UnVerifiedUsers.findByIdAndDelete(e._id);
       }
     }
+
     const saveUnverified = new UnVerifiedUsers({
-      email: email,
-      code: await bcrypt.hash(String(code), 10)
+      email,
+      code: await bcrypt.hash(String(code), 10),
     });
     const saved = await saveUnverified.save();
+
     if (saved._id) {
-      sendEMail(email, code);
-      return res.status(200).send({
-        isSuccess: true
-      });
+      await sendEMail(email, code);
+      return res.status(200).send({ isSuccess: true });
     }
-  }catch(err){
-    console.log(err);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send({ msg: 'Server error' });
   }
 });
 
+// Route to verify code
 router.post('/api/verify/email', async (req, res) => {
-  try{
+  try {
     const { email, code } = req.body;
-    const saveUnverified = await UnVerifiedUsers.findOne({email: email});
-    const decode = await bcrypt.compare(code, saveUnverified.code)
+    const saveUnverified = await UnVerifiedUsers.findOne({ email });
+    const decode = await bcrypt.compare(code, saveUnverified.code);
+
     if (decode) {
-      res.status(200).send({
-        msg: 'successfully verified ✓',
-        isSuccess: true
-      });
-      return await UnVerifiedUsers.deleteOne({email: email});
+      await UnVerifiedUsers.deleteOne({ email });
+      return res.status(200).send({ msg: 'successfully verified ✓', isSuccess: true });
     }
-    
-    return res.status(404).send({
-      msg: 'Incorrect code',
-      isSuccess: false
-    });
-  }catch(err){
-    console.log(err);
+
+    return res.status(404).send({ msg: 'Incorrect code', isSuccess: false });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send({ msg: 'Server error' });
   }
 });
 

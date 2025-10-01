@@ -89,5 +89,6 @@ app.get('/api/gemini', async (req, res) => {
     res.status(500).send({ error: "Failed to fetch from Gemini API" });
   }
 });
+
 export default app;
 //app.listen(process.env.PORT, () => console.log(`Local server running on port ${PORT}`));

@@ -177,11 +177,11 @@ router.get('/api/posts/GetComments/:id', verifyToken, async (req, res) => {
     const user = req.user.id;
     if (!user) {
       res.status(403).send({
-        comments: {
+        comments:[{
           user: 'Notr',
           text: "Unauthorized.",
           postId: postId
-        }
+        }]
       });
     }
     const findComment = await Comment.find({postId : postId});
@@ -190,9 +190,7 @@ router.get('/api/posts/GetComments/:id', verifyToken, async (req, res) => {
         comments: findComment
       });
     }
-    res.status(404).send({
-      comments: 'This post has no comments.'
-    });
+    res.status(404);
   } catch (error) {
     console.error(error);
   }
