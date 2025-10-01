@@ -130,6 +130,8 @@ router.get('/api/users/getOtherProfile/:id/logged/:loggedUser', async (req, res)
   try {
     const { id } = req.params;
     const { loggedUser } = req.params;
+    console.log('🌄',loggedUser);
+    console.log('😂', id);
     if (!id) {
       return res.status(400).send({
         isSuccess: false,

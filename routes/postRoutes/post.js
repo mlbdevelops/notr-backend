@@ -186,11 +186,12 @@ router.get('/api/posts/GetComments/:id', verifyToken, async (req, res) => {
     }
     const findComment = await Comment.find({postId : postId});
     if (findComment.length >= 1) {
-      res.status(200).send({
+      return res.status(200).send({
         comments: findComment
       });
+    } else {
+      res.sendStatus(204);
     }
-    res.status(404);
   } catch (error) {
     console.error(error);
   }
