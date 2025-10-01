@@ -70,10 +70,7 @@ router.get('/api/getIndividualNote/:noteId', verifyToken, async (req, res) => {
     const { noteId } = req.params;
     const ownerId = req.user.id;
     if (!ownerId) {
-      return res.status(401).send({ response : {
-        title: 'Unauthorized.',
-        note: "You're accessing an unauthorized path."
-      }});
+      return;
     }
     const note = await Note.findById(noteId);
     if (!note) {

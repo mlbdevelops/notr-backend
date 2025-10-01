@@ -9,7 +9,7 @@ dotenv.config();
 const router = Router();
 
 // Set SendGrid API Key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+sgMail.setApiKey('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');
 
 // Generate 6-digit verification code
 function generatePassword() {
@@ -21,7 +21,7 @@ async function sendEMail(email, code) {
   try {
     const msg = {
       to: email,
-      from: process.env.APP_EMAIL, // must be verified in SendGrid
+      from: process.env.APP_EMAIL,
       subject: 'Verify Your Email Address',
       html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; color: #111; background-color: #fff; border-radius: 8px; border: 1px solid #ddd;">
