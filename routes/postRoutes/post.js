@@ -179,7 +179,7 @@ router.get('/api/posts/GetComments/:id', verifyToken, async (req, res) => {
       res.status(403).send({
         comments:[{
           user: 'Notr',
-          text: "Unauthorized.",
+          text: "Login to perform this action.",
           postId: postId
         }]
       });

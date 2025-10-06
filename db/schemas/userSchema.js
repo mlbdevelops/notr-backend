@@ -25,6 +25,9 @@ const userSchema = new mongoose.Schema({
   photoUrl: {
     type: String
   },
+  coverUrl: {
+    type: String
+  },
   isPrivate:{
     type: Boolean,
     default: false

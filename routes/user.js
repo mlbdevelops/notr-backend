@@ -217,13 +217,19 @@ router.get('/api/users/knowConnection/:conn', verifyToken, async (req, res) => {
   }
 });
 
-router.patch('/api/users/editProfile', verifyToken, upload.single('file'), async (req, res) => {
+router.patch('/api/users/editProfile', verifyToken, upload.fields([
+  { name: 'file', maxCount: 1 }, // profile photo
+  { name: 'cover', maxCount: 1 } // cover photo
+]), async (req, res) => {
   try {
     const userId = req.user.id;
     if (!userId) return res.status(401).json({ msg: 'Unauthorized' });
-    
+
     let newPhotoUrl = req.body.actualPhoto || '';
-    if (req.file) {
+    let newCoverUrl = req.body.actualCover || '';
+
+    // Upload profile photo if provided
+    if (req.files?.file?.[0]) {
       const result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { folder: 'profile' },
@@ -232,20 +238,42 @@ router.patch('/api/users/editProfile', verifyToken, upload.single('file'), async
             else resolve(result);
           }
         );
-        stream.end(req.file.buffer);
+        stream.end(req.files.file[0].buffer);
       });
       newPhotoUrl = result.secure_url;
     }
-    
+
+    // Upload cover photo if provided
+    if (req.files?.cover?.[0]) {
+      const coverResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'cover' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(req.files.cover[0].buffer);
+      });
+      newCoverUrl = coverResult.secure_url;
+    }
+
+    // If user removed profile photo
     if (req.body.actualPhoto === 'removed') {
       newPhotoUrl = '';
+    }
+
+    // If user removed cover photo
+    if (req.body.actualCover === 'removed') {
+      newCoverUrl = '';
     }
 
     const newUserData = {
       photoUrl: newPhotoUrl,
       bio: req.body.bio,
       name: req.body.name,
-      role: req.body.role
+      role: req.body.role,
+      coverUrl: newCoverUrl
     };
 
     const updatedUser = await User.findByIdAndUpdate(

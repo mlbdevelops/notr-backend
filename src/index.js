@@ -16,6 +16,14 @@ import userRoutes from '../routes/user.js';
 
 import { GoogleGenAI } from '@google/genai';
 
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  baseURL: 'https://api.deepseek.com',
+  apiKey: 'sk-9f4ad86e0bf244c5a94140307a325047',
+});
+
+
 dotenv.config();
 const app = express();
 
@@ -46,23 +54,6 @@ app.get('/', (req, res) => {
   })
 })
 
-app.get('/users/:ownerCode', async (req, res) => {
-  if (req.params.ownerCode !== 'mlbdev') {
-    return res.status(401).send({
-      msg: 'Unauthorized'
-    })
-  }
-  console.log(await User.find());
-  res.status(200).send({
-    users: await User.find()
-  })
-});
-
-app.use((req, res, next) => {
-  res.send('Unavailable route.')
-  next()
-})
-
 app.get('/api/gemini', async (req, res) => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_KEY });
@@ -89,6 +80,11 @@ app.get('/api/gemini', async (req, res) => {
     res.status(500).send({ error: "Failed to fetch from Gemini API" });
   }
 });
+
+app.use((req, res, next) => {
+  res.send('Unavailable route.')
+  next()
+})
 
 export default app;
 //app.listen(process.env.PORT || 3001, () => console.log(`Local server running on port ${3001}`));
