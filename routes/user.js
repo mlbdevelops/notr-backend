@@ -9,7 +9,7 @@ import PocketBase from 'pocketbase';
 import mongoose from 'mongoose';
 import verifyToken from '../security/verifyJwt.js';
 import cloudinary from '../cloudinary.js';
-
+import Comment from '../db/schemas/commentsSchema.js'
 const router = Router();
 const db = new PocketBase('http://127.0.0.1:8090');
 const upload = multer({ storage: multer.memoryStorage() });
@@ -84,6 +84,8 @@ router.delete('/api/delete', verifyToken, async (req, res) => {
     const result = await Note.deleteMany({ownerId: userid});
     const delete_user = await User.findByIdAndDelete(userid);
     const deletePosts = await Post.deleteMany({user: userid});
+    const deleteComments = await Comment.deleteMany({'user._id': userid});
+    const deleteLikes = await Like.deleteMany({user: userid});
     res.status(200).send({
       isSuccess: true,
       response: 'Your account has successfully been deleted'
@@ -218,8 +220,8 @@ router.get('/api/users/knowConnection/:conn', verifyToken, async (req, res) => {
 });
 
 router.patch('/api/users/editProfile', verifyToken, upload.fields([
-  { name: 'file', maxCount: 1 }, // profile photo
-  { name: 'cover', maxCount: 1 } // cover photo
+  { name: 'file', maxCount: 1 },
+  { name: 'cover', maxCount: 1 }
 ]), async (req, res) => {
   try {
     const userId = req.user.id;
@@ -227,7 +229,9 @@ router.patch('/api/users/editProfile', verifyToken, upload.fields([
 
     let newPhotoUrl = req.body.actualPhoto || '';
     let newCoverUrl = req.body.actualCover || '';
-
+    
+    console.log([newCoverUrl, newPhotoUrl])
+    
     // Upload profile photo if provided
     if (req.files?.file?.[0]) {
       const result = await new Promise((resolve, reject) => {
@@ -257,17 +261,14 @@ router.patch('/api/users/editProfile', verifyToken, upload.fields([
       });
       newCoverUrl = coverResult.secure_url;
     }
-
-    // If user removed profile photo
+    
     if (req.body.actualPhoto === 'removed') {
       newPhotoUrl = '';
     }
-
-    // If user removed cover photo
+    
     if (req.body.actualCover === 'removed') {
       newCoverUrl = '';
     }
-
     const newUserData = {
       photoUrl: newPhotoUrl,
       bio: req.body.bio,
@@ -275,23 +276,28 @@ router.patch('/api/users/editProfile', verifyToken, upload.fields([
       role: req.body.role,
       coverUrl: newCoverUrl
     };
-
+    
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: newUserData },
       { new: true }
     );
-
+    
     await Post.updateMany(
       { user: userId },
-      { $set: { userProfile: newPhotoUrl } }
+      { $set: { userProfile: newPhotoUrl }}
     );
-
+    
+    await Comment.updateMany(
+      { 'user._id': userId },
+      { $set : { 'user.profile' : newPhotoUrl } }
+    );
+    
     res.status(200).json({
       msg: 'Profile updated.',
       newData: updatedUser
     });
-
+    
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: 'Something went wrong', error: error.message });
@@ -342,7 +348,7 @@ router.post('/api/user/editIsPrivate', verifyToken, async (req, res) => {
 router.get('/user', (req, res) => {
   const { id } = req.query
   if (id) {
-    return res.redirect(`https://notr-sigma.vercel.app/profile/profile?user=${id}`)
+    return res.redirect(`https://notrapp.vercel.app/profile/profile?user=${id}`)
   }
 })
 

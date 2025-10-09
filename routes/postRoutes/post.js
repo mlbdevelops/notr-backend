@@ -147,12 +147,13 @@ router.post('/api/posts/comments', verifyToken, async (req, res) => {
     const { postId, text } = req.body;
     const user = req.user.id;
     const commentOwner = await User.findOne({_id: user});
-    console.log(commentOwner);
+    
     const commentModel = {
       postId: postId,
       user: {
         _id : user,
-        username: commentOwner?.username
+        username: commentOwner?.username,
+        profile: commentOwner?.photoUrl
       },
       text: text
     };
@@ -212,6 +213,12 @@ router.delete('/api/posts/delete/:postId', verifyToken, async (req, res) => {
     });
     if (findPost?._id) {
       await Post.deleteOne(findPost);
+      await Comment.deleteMany({
+        'user._id' : user
+      })
+      await Likes.deleteMany({
+        postId : postId
+      })
     }
     res.status(200).send({
       msg: 'Post deleted.'

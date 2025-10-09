@@ -9,24 +9,26 @@ import mongoose from 'mongoose';
 
 const router = Router();
 
-router.post('/api/postsOrusers/search', verifyToken, async (req, res) => {
-  try{
+  router.post('/api/postsOrusers/search', verifyToken, async (req, res) => {
+  try {
     const { query } = req.body;
-    console.log(req.user)
-    console.log(query)
-    if (!query) {
-      return;
-    }
-    const users = await User.find();
     const limit = parseInt(req.query.limit) || 15;
     const cursor = req.query.cursor;
     const userId = req.user.id;
-    let srch = {};
-    if (cursor) {
-      srch = { _id: { $lt: new mongoose.Types.ObjectId(cursor) } };
+
+    if (!query || query.trim() === '') {
+      return res.status(400).json({ error: "Query is required" });
     }
+    let postMatch = {
+      note: { $regex: query, $options: "i" }
+    };
+
+    if (cursor) {
+      postMatch._id = { $lt: new mongoose.Types.ObjectId(cursor) };
+    }
+
     const posts = await Post.aggregate([
-      { $match: srch },
+      { $match: postMatch },
       { $sort: { createdAt: -1 } },
       { $limit: limit + 1 },
       {
@@ -47,19 +49,35 @@ router.post('/api/postsOrusers/search', verifyToken, async (req, res) => {
       },
       { $project: { like: 0 } }
     ]);
+    
     const hasMore = posts.length > limit;
     if (hasMore) posts.pop();
     
-    const filteredUsers = users.filter(u => u.username.toLowerCase().startsWith(query.toLowerCase()));
-    
-    res.status(200).send({
+    const users = await User.aggregate([
+      {
+        $match: {
+          username: { $regex: `^${query}`, $options: "i" }
+        }
+      },
+      { $limit: 10 },
+      {
+        $project: {
+          password: 0,
+          email: 0,
+          __v: 0
+        }
+      }
+    ]);
+    res.status(200).json({
       posts,
+      users,
       nextCursor: hasMore ? posts[posts.length - 1]._id : null,
-      hasMore,
-      users: filteredUsers
+      hasMore
     });
-  }catch(err){
-    console.log(err);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
