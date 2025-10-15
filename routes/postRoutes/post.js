@@ -18,7 +18,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 router.get("/api/posts/getPosts", verifyToken, async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 15;
+    const limit = parseInt(req.query.limit) || 10;
     const cursor = req.query.cursor;
     const userId = req.user.id;
     let query = {};

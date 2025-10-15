@@ -24,6 +24,22 @@ const schema = new mongoose.Schema({
     default: false,
     min: 0
   },
+  fontWeight:{
+    type: String,
+    min: 0
+  },
+  fontFamily:{
+    type: String,
+    min: 0
+  },
+  textAlign:{
+    type: String,
+    min: 0
+  },
+  fontStyle:{
+    type: String,
+    min: 0
+  }
 }, {timestamps: true});
 
 export default mongoose.model('Note', schema, 'notes');

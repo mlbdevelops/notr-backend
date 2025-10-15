@@ -132,8 +132,7 @@ router.get('/api/users/getOtherProfile/:id/logged/:loggedUser', async (req, res)
   try {
     const { id } = req.params;
     const { loggedUser } = req.params;
-    console.log('🌄',loggedUser);
-    console.log('😂', id);
+    
     if (!id) {
       return res.status(400).send({
         isSuccess: false,
@@ -232,7 +231,6 @@ router.patch('/api/users/editProfile', verifyToken, upload.fields([
     
     console.log([newCoverUrl, newPhotoUrl])
     
-    // Upload profile photo if provided
     if (req.files?.file?.[0]) {
       const result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -246,8 +244,7 @@ router.patch('/api/users/editProfile', verifyToken, upload.fields([
       });
       newPhotoUrl = result.secure_url;
     }
-
-    // Upload cover photo if provided
+    
     if (req.files?.cover?.[0]) {
       const coverResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(

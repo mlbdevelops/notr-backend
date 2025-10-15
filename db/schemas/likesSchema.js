@@ -10,6 +10,9 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId || String,
     ref: 'User',
     required: true
+  },
+  type: {
+    type: String
   }
 });
 

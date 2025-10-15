@@ -96,6 +96,10 @@ router.patch('/api/saveNote/:noteId', verifyToken, async (req, res) => {
       title: req.body.title,
       note: req.body.note,
       tag: req.body.tag,
+      fontStyle: req.body.fontStyle,
+      textAlign: req.body.textAlign,
+      fontFamily: req.body.fontFamily,
+      fontWeight: req.body.fontWeight,
       isPrivate: req.body.isPrivate,
     };
     const getNote = await Note.findByIdAndUpdate(noteId, updatedNote, {

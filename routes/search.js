@@ -20,7 +20,7 @@ const router = Router();
       return res.status(400).json({ error: "Query is required" });
     }
     let postMatch = {
-      note: { $regex: query, $options: "i" }
+      note: { $regex: query, $options: "i" },
     };
 
     if (cursor) {
@@ -56,7 +56,8 @@ const router = Router();
     const users = await User.aggregate([
       {
         $match: {
-          username: { $regex: `^${query}`, $options: "i" }
+          username: { $regex: `^${query}`, $options: "i" },
+          isPrivate: { $eq: false }
         }
       },
       { $limit: 10 },
