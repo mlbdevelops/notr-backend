@@ -51,6 +51,10 @@ router.post('/api/addNote', verifyToken, async (req, res) => {
       title : title,
       note: '',
       tag: '',
+      fontStyle: '',
+      fontFamily: '',
+      fontWeight: '',
+      textAlign: '',
       isPrivate: false
     });
     
