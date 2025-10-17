@@ -41,6 +41,7 @@ router.post('/api/auth/register', async (req, res) => {
     if (user) {
       const newUser = new User(user);
       const savedUser = await newUser.save();
+      savedUser.password = '';
       res.status(201).send({
         response: savedUser,
         isSuccess: true,
